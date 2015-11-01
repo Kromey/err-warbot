@@ -3,6 +3,7 @@ import random
 
 class WarBot(BotPlugin):
     """Let Errbot run word wars"""
+    min_err_version = '3.0.5' # Optional, but recommended
 
     _in_progress = False
     _start = 0
