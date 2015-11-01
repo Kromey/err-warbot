@@ -1,0 +1,9 @@
+[Core]
+Name = WarBot
+Module = warbot
+
+[Python]
+Version = 3
+
+[Documentation]
+Description = Run word wars and writing sprints
