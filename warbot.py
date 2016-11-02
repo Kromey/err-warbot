@@ -1,5 +1,8 @@
-from errbot import BotPlugin, botcmd
+from datetime import datetime
 import random
+
+
+from errbot import BotPlugin, botcmd
 
 class WarBot(BotPlugin):
     """Let Errbot run word wars"""
@@ -10,6 +13,8 @@ class WarBot(BotPlugin):
     _duration = 0
     _countdown = 0
     _wordwar_room = None
+
+    _poller_interval = 3
 
     @botcmd
     def wordwar(self, msg, args):
@@ -26,7 +31,7 @@ class WarBot(BotPlugin):
 
             self._wordwar_room = self.query_room(str(msg.frm.room))
 
-            self.start_poller(60, self._start_wordwar)
+            self.start_poller(self._poller_interval, self._start_wordwar)
             return "{:d} minute word war will begin in {:d} minutes".format(mins, self._countdown)
         else:
             return "You gotta tell me how long it'll go!"
@@ -65,6 +70,9 @@ class WarBot(BotPlugin):
                 )
 
     def _start_wordwar(self):
+        if datetime.now().second >= self._poller_interval:
+            return
+
         self._countdown -= 1
         if self._countdown <= 0:
             self.stop_poller(self._start_wordwar)
