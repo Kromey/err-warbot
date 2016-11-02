@@ -24,7 +24,7 @@ class WarBot(BotPlugin):
             self._countdown = 5
             self._in_progress = True
 
-            self._wordwar_room = self.query_room(msg.frm.room)
+            self._wordwar_room = self.query_room(str(msg.frm.room))
 
             self.start_poller(60, self._start_wordwar)
             return "{:d} minute word war will begin in {:d} minutes".format(mins, self._countdown)
