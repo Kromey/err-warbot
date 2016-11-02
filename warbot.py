@@ -9,8 +9,7 @@ class WarBot(BotPlugin):
     _start = 0
     _duration = 0
     _countdown = 0
-    _wordwar_from = None
-    _wordwar_type = None
+    _wordwar_room = None
 
     @botcmd
     def wordwar(self, msg, args):
@@ -25,8 +24,7 @@ class WarBot(BotPlugin):
             self._countdown = 5
             self._in_progress = True
 
-            self._wordwar_from = self.build_identifier(msg.frm.person)
-            self._wordwar_type = msg.type
+            self._wordwar_room = self.query_room(msg.frm.room)
 
             self.start_poller(60, self._start_wordwar)
             return "{:d} minute word war will begin in {:d} minutes".format(mins, self._countdown)
@@ -62,9 +60,8 @@ class WarBot(BotPlugin):
 
     def _announce(self, msg, *args, **kwargs):
         self.send(
-                self._wordwar_from,
+                self._wordwar_room,
                 msg.format(*args, **kwargs),
-                message_type=self._wordwar_type,
                 )
 
     def _start_wordwar(self):
