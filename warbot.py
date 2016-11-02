@@ -16,8 +16,13 @@ class WarBot(BotPlugin):
 
     _poller_interval = 3
 
-    @botcmd
+    @botcmd(hidden=True)
     def wordwar(self, msg, args):
+        """Alias of "word war" """
+        return self.word_war(msg, args)
+
+    @botcmd
+    def word_war(self, msg, args):
         """Start a wordwar"""
         if self._in_progress:
             return "Cannot start a word war while one is already in progress!"
@@ -36,8 +41,12 @@ class WarBot(BotPlugin):
         else:
             return "You gotta tell me how long it'll go!"
 
-    @botcmd(admin_only=True)
+    @botcmd(admin_only=True, hidden=True)
     def cancel_wordwar(self, msg, args):
+        return self.cancel_word_war(msg, args)
+
+    @botcmd(admin_only=True)
+    def cancel_word_war(self, msg, args):
         if not self._in_progress:
             return "No word war to cancel"
 
