@@ -2,7 +2,7 @@ from datetime import datetime
 import random
 
 
-from errbot import BotPlugin, botcmd
+from errbot import BotPlugin, botcmd, re_botcmd
 
 class WarBot(BotPlugin):
     """Let Errbot run word wars"""
@@ -16,22 +16,25 @@ class WarBot(BotPlugin):
 
     _poller_interval = 3
 
-    @botcmd(hidden=True)
-    def wordwar(self, msg, args):
-        """Alias of "word war" """
-        return self.word_war(msg, args)
-
-    @botcmd
-    def word_war(self, msg, args):
+    @re_botcmd(
+            pattern=r'^word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?',
+            name="word war",
+            )
+    def word_war(self, msg, match):
         """Start a wordwar"""
+        args = match.groupdict()
+
         if self._in_progress:
             return "Cannot start a word war while one is already in progress!"
         elif msg.type != "groupchat":
             return "Word wars must be run in group chats!"
-        elif args and args.isnumeric():
-            mins = int(args)
+        elif args['duration']:
+            mins = int(args['duration'])
             self._duration = mins
-            self._countdown = 5
+            if args['in']:
+                self._countdown = int(args['in'])
+            else:
+                self._countdown = 5
             self._in_progress = True
 
             self._wordwar_room = self.query_room(str(msg.frm.room))
