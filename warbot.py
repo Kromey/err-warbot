@@ -6,9 +6,14 @@ from errbot import BotPlugin, botcmd, re_botcmd
 
 
 _WarCommandPattern = r"""
-    word\s?war\s
-    (?:for\s)?
-    (?P<duration>[\d]+)?(?:[- ]?min(ute)?s?)?
+    (?:
+        word\s?war\s
+        (?:for\s)?
+        (?P<duration1>[\d]+)?(?:[- ]?min(ute)?s?)?
+        |
+        (?P<duration2>[\d]+)?(?:[- ]?min(ute)?s?)?
+        \sword\s?war\s
+    )
     (?:\sbeginning|begins?)?
     # "in" sets up an X-minute countdown
     (?:\sin\s
@@ -53,6 +58,7 @@ class WarBot(BotPlugin):
 
         args = match.groupdict()
         room = str(msg.frm.room)
+        duration = args['duration1'] or args['duration2']
 
         try:
             if self._wars[room]['active']:
@@ -60,7 +66,7 @@ class WarBot(BotPlugin):
         except KeyError:
             self._wars[room] = {'active':False}
 
-        self._wars[room]['duration'] = int(args['duration'])
+        self._wars[room]['duration'] = int(duration)
         self._wars[room]['room'] = self.query_room(room)
 
         if args['at_hour']:
