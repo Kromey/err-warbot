@@ -7,17 +7,17 @@ from errbot import BotPlugin, botcmd, re_botcmd
 
 _WarCommandPattern = r"""
     word\s?war\s
-    (for\s)?
-    (?P<duration>[\d]+)([- ]?min(ute)?s?)?
-    (\sbeginning|begins?)?
+    (?:for\s)?
+    (?P<duration>[\d]+)?(?:[- ]?min(ute)?s?)?
+    (?:\sbeginning|begins?)?
     # "in" sets up an X-minute countdown
-    (\sin\s
-        (?P<in>[\d]+)(\smin(ute)?s?)?
+    (?:\sin\s
+        (?P<in>[\d]+)(?:\smin(ute)?s?)?
     )?
     # "at" will calculate the countdown to start at the specified time
-    (\sat\s
+    (?:\sat\s
         (?P<at_hour>[012]?[\d])
-        (:(?P<at_minute>\d\d))?
+        (?::(?P<at_minute>\d\d))?
     )?
 """
 
