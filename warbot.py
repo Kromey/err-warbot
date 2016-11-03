@@ -17,7 +17,7 @@ class WarBot(BotPlugin):
         self.start_poller(self._poller_interval, self._run_wordwar)
 
     @re_botcmd(
-            pattern=r'^word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?(at (?P<at_hour>[\d]+)(:(?P<at_minute>[\d]+))?)?',
+            pattern=r'word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?(at (?P<at_hour>[\d]+)(:(?P<at_minute>[\d]+))?)?',
             name="word war",
             )
     def word_war(self, msg, match):
