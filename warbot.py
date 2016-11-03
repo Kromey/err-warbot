@@ -21,7 +21,14 @@ class WarBot(BotPlugin):
             name="word war",
             )
     def word_war(self, msg, match):
-        """Start a wordwar"""
+        """Start a wordwar
+
+        This command aims to be flexible and natural:
+          * word war for 5 minutes in 12 minutes
+          * word war 6 [in 5 minutes]
+          * wordwar for 5 mins in 1 min
+        etc.
+        """
         if msg.type != "groupchat":
             return "Sorry, I only run word wars in chat rooms"
 
@@ -54,6 +61,12 @@ class WarBot(BotPlugin):
 
     @botcmd(admin_only=True)
     def war_cancel(self, msg, args):
+        """Cancel a word war.
+
+        With the argument '--all', this will forcibly and silently cancel ALL
+        word wars; otherwise, the argument is expected to be the name of the
+        room with an active word war, which will be cancelled with a message to
+        the room blaming you."""
         if args == '--all':
             self._wars = {}
             return "All word wars cancelled"
@@ -71,10 +84,15 @@ class WarBot(BotPlugin):
 
     @botcmd(admin_only=True)
     def war_list(self, msg, args):
+        """List active word wars"""
         yield "The following wars are active:"
         for war in self._wars:
             if self._wars[war]['active']:
-                yield war
+                yield "{war}: {duration} min(s) in {countdown} min(s)".format(
+                        war=war,
+                        duration=self._wars[war]['duration'],
+                        countdown=self._wars[war]['countdown'],
+                        )
 
     def _announce(self, room, msg, *args, **kwargs):
         self.send(
