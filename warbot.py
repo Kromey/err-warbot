@@ -1,8 +1,26 @@
 from datetime import datetime
-import random
+import random,re
 
 
 from errbot import BotPlugin, botcmd, re_botcmd
+
+
+_WarCommandPattern = r"""
+    word\s?war\s
+    (for\s)?
+    (?P<duration>[\d]+)([- ]?min(ute)?s?)?
+    (\sbeginning|begins?)?
+    # "in" sets up an X-minute countdown
+    (\sin\s
+        (?P<in>[\d]+)(\smin(ute)?s?)?
+    )?
+    # "at" will calculate the countdown to start at the specified time
+    (\sat\s
+        (?P<at_hour>[012]?[\d])
+        (:(?P<at_minute>\d\d))?
+    )?
+"""
+
 
 class WarBot(BotPlugin):
     """Let Errbot run word wars"""
@@ -17,7 +35,8 @@ class WarBot(BotPlugin):
         self.start_poller(self._poller_interval, self._run_wordwar)
 
     @re_botcmd(
-            pattern=r'word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?(at (?P<at_hour>[\d]+)(:(?P<at_minute>[\d]+))?)?',
+            pattern=_WarCommandPattern,
+            flags=re.X,
             name="word war",
             )
     def word_war(self, msg, match):
