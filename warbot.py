@@ -6,95 +6,103 @@ from errbot import BotPlugin, botcmd, re_botcmd
 
 class WarBot(BotPlugin):
     """Let Errbot run word wars"""
-    min_err_version = '3.0.5' # Optional, but recommended
+    min_err_version = '4.3.0' # Optional, but recommended
 
-    _in_progress = False
-    _start = 0
-    _duration = 0
-    _countdown = 0
-    _wordwar_room = None
+    _wars = {}
 
     _poller_interval = 3
 
+    def activate(self):
+        super().activate()
+        self.start_poller(self._poller_interval, self._run_wordwar)
+
     @re_botcmd(
-            pattern=r'^word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?',
+            pattern=r'^word ?war (for )?(?P<duration>[\d]+)( min(ute)?s?)? ?(in (?P<in>[\d]+)( min(ute)?s?)?)?(at (?P<at_hour>[\d]+)(:(?P<at_minute>[\d]+))?)?',
             name="word war",
             )
     def word_war(self, msg, match):
         """Start a wordwar"""
+        if msg.type != "groupchat":
+            return "Sorry, I only run word wars in chat rooms"
+
         args = match.groupdict()
+        room = str(msg.frm.room)
 
-        if self._in_progress:
-            return "Cannot start a word war while one is already in progress!"
-        elif msg.type != "groupchat":
-            return "Word wars must be run in group chats!"
-        elif args['duration']:
-            mins = int(args['duration'])
-            self._duration = mins
-            if args['in']:
-                self._countdown = int(args['in'])
-            else:
-                self._countdown = 5
-            self._in_progress = True
+        try:
+            if self._wars[room]['active']:
+                return "We're already word warring!"
+        except KeyError:
+            self._wars[room] = {'active':False}
 
-            self._wordwar_room = self.query_room(str(msg.frm.room))
+        self._wars[room]['duration'] = int(args['duration'])
+        self._wars[room]['room'] = self.query_room(room)
 
-            self.start_poller(self._poller_interval, self._start_wordwar)
-            return "{:d} minute word war will begin in {:d} minutes".format(mins, self._countdown)
+        if args['at_hour']:
+            return "Sorry, I haven't been coded for that format just yet."
         else:
-            return "You gotta tell me how long it'll go!"
+            if not args['in']:
+                args['in'] = 5
 
-    @botcmd(admin_only=True, hidden=True)
-    def cancel_wordwar(self, msg, args):
-        return self.cancel_word_war(msg, args)
+            self._wars[room]['countdown'] = int(args['in'])
+
+        self._wars[room]['active'] = True
+
+        return "{:d} minute word war will begin in {:d} minutes".format(
+                self._wars[room]['duration'],
+                self._wars[room]['countdown'],
+                )
 
     @botcmd(admin_only=True)
-    def cancel_word_war(self, msg, args):
-        if not self._in_progress:
-            return "No word war to cancel"
-
-        self._in_progress = False
-
-        response = []
+    def war_cancel(self, msg, args):
+        if args == '--all':
+            self._wars = {}
+            return "All word wars cancelled"
 
         try:
-            self.stop_poller(self._start_wordwar)
-            response.append("Stopped countdown poller")
-        except ValueError:
-            response.append("No countdown to stop")
+            self._wars[args]['active'] = False
+            self._announce(
+                    self._wars[args]['room'],
+                    "Word war cancelled by {}!",
+                    msg.frm.nick,
+                    )
+            return "Word war cancelled"
+        except KeyError:
+            return "No matching word war found"
 
-        try:
-            self.stop_poller(self._end_wordwar)
-            response.append("Stopped wordwar poller")
-        except ValueError:
-            response.append("No wordwar to stop")
+    @botcmd(admin_only=True)
+    def war_list(self, msg, args):
+        yield "The following wars are active:"
+        for war in self._wars:
+            if self._wars[war]['active']:
+                yield war
 
-        self._announce("Word war has been cancelled by {}!", msg.frm.nick)
-
-        response.append("Word war cancelled!")
-
-        return "\n".join(response)
-
-    def _announce(self, msg, *args, **kwargs):
+    def _announce(self, room, msg, *args, **kwargs):
         self.send(
-                self._wordwar_room,
+                room,
                 msg.format(*args, **kwargs),
                 )
 
-    def _start_wordwar(self):
+    def _run_wordwar(self):
         if datetime.now().second >= self._poller_interval:
             return
 
-        self._countdown -= 1
-        if self._countdown <= 0:
-            self.stop_poller(self._start_wordwar)
-            self._announce("Word war for {:d} minutes begins now!", self._duration)
-            self.start_poller(60 * self._duration, self._end_wordwar)
-        else:
-            self._announce("Word war begins in {:d} minutes!", self._countdown)
+        for room in self._wars:
+            war = self._wars[room]
 
-    def _end_wordwar(self):
-        self._in_progress = False
-        self._announce("Word war over!")
-        self.stop_poller(self._end_wordwar)
+            if not war['active']:
+                continue
+
+            if war['countdown'] > 0:
+                war['countdown'] -= 1
+
+                if war['countdown'] <= 0:
+                    self._announce(war['room'], "Word war for {:d} minutes begins now!", war['duration'])
+                else:
+                    self._announce(war['room'], "Word war starts in {:d} minutes", war['countdown'])
+            else:
+                war['duration'] -= 1
+
+                if war['duration'] <= 0:
+                    war['active'] = False
+                    self._announce(war['room'], "Word war over!")
 
