@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime,time,timedelta
+import math
 import random,re
 
 
@@ -12,7 +13,7 @@ _WarCommandPattern = r"""
         (?P<duration1>[\d]+)?(?:[- ]?min(ute)?s?)?
         |
         (?P<duration2>[\d]+)?(?:[- ]?min(ute)?s?)?
-        \sword\s?war\s
+        \sword\s?war
     )
     (?:\sbeginning|begins?)?
     # "in" sets up an X-minute countdown
@@ -70,13 +71,25 @@ class WarBot(BotPlugin):
         self._wars[room]['room'] = self.query_room(room)
 
         if args['at_hour']:
-            return "Sorry, I haven't been coded for that format just yet."
+            today = datetime.today()
+            now = datetime.now().time()
+            if args['at_minute']:
+                then = time(hour=int(args['at_hour']), minute=int(args['at_minute']))
+            else:
+                then = time(hour=int(args['at_hour']))
+
+            now = datetime.combine(today,now)
+            then = datetime.combine(today,then)
+
+            while then < now:
+                then = then + timedelta(hours=12)
+
+            diff = then - now
+            countdown = math.ceil(diff.total_seconds()/60)
         else:
-            if not args['in']:
-                args['in'] = 5
+            countdown = args['in'] or 5
 
-            self._wars[room]['countdown'] = int(args['in'])
-
+        self._wars[room]['countdown'] = int(countdown)
         self._wars[room]['active'] = True
 
         return "{:d} minute word war will begin in {:d} minutes".format(
