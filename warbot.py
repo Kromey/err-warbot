@@ -92,10 +92,7 @@ class WarBot(BotPlugin):
         self._wars[room]['countdown'] = int(countdown)
         self._wars[room]['active'] = True
 
-        return "{:d} minute word war will begin in {:d} minutes".format(
-                self._wars[room]['duration'],
-                self._wars[room]['countdown'],
-                )
+        return "Sounds like fun! I'll time you!"
 
     @botcmd(admin_only=True)
     def war_cancel(self, msg, args):
@@ -152,9 +149,17 @@ class WarBot(BotPlugin):
                 war['countdown'] -= 1
 
                 if war['countdown'] <= 0:
-                    self._announce(war['room'], "Word war for {:d} minutes begins now!", war['duration'])
+                    self._announce(war['room'], "{:d}-minute word war! Go go go!", war['duration'])
+                    self._announce(war['room'], "Good luck everyone!")
                 else:
-                    self._announce(war['room'], "Word war starts in {:d} minutes", war['countdown'])
+                    if war['countdown'] == 1:
+                        self._announce(war['room'], "Get ready! {:d}-minute word war in 1 minute!", war['duration'])
+                    elif war['countdown'] == 5:
+                        self._announce(war['room'], "5-minute warning for our {:d}-minute word war!", war['duration'])
+                    elif war['countdown'] == 2:
+                        self._announce(war['room'], "2 minutes to go!")
+                    elif war['countdown'] <= 3:
+                        self._announce(war['room'], "Our word war starts in {:d} minutes!", war['countdown'])
             else:
                 war['duration'] -= 1
 
