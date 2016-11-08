@@ -51,6 +51,7 @@ class WarBot(BotPlugin):
 
     def activate(self):
         super().activate()
+        self._wars = {}
         self.start_poller(self._poller_interval, self._run_wordwar)
 
     @re_botcmd(
@@ -74,14 +75,16 @@ class WarBot(BotPlugin):
         room = str(msg.frm.room)
         duration = args['duration1'] or args['duration2']
 
+        war = {'active':True}
+
         try:
             if self._wars[room]['active']:
                 return "We're already word warring!"
         except KeyError:
-            self._wars[room] = {'active':False}
+            pass
 
-        self._wars[room]['duration'] = int(duration)
-        self._wars[room]['room'] = self.query_room(room)
+        war['duration'] = int(duration)
+        war['room'] = self.query_room(room)
 
         # Default to a 5-minute countdown
         countdown = 5
@@ -122,8 +125,8 @@ class WarBot(BotPlugin):
         if countdown > self._max_countdown:
             return "That's a long ways away, let's set that up later instead, okay?"
 
-        self._wars[room]['countdown'] = countdown
-        self._wars[room]['active'] = True
+        war['countdown'] = countdown
+        self._wars[room] = war
 
         if countdown > 0:
             return "Sounds like fun! I'll time you!"
