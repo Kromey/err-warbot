@@ -82,8 +82,18 @@ class WarBot(BotPlugin):
             now = datetime.combine(today,now)
             then = datetime.combine(today,then)
 
+            # 12-hour intervals let us quickly "flip" from am to pm and back
+            delta = timedelta(hours=12)
+
+            # Since we don't require "am/pm" nor 24-hour notation, let's try to
+            # deduce which -- or if we need to cross to tomorrow
             while then < now:
-                then = then + timedelta(hours=12)
+                then = then + delta
+
+            # Just in case we misinterpreted a time (e.g. interpreted as "noon"
+            # when user meant "midnight"), wind the clock backwards if we can
+            while then > now + delta:
+                then = then - delta
 
             diff = then - now
             countdown = math.ceil(diff.total_seconds()/60)
