@@ -54,7 +54,17 @@ class WarBot(BotPlugin):
     def activate(self):
         super().activate()
         self._wars = {}
+
+        if self.config is None:
+            self.configure(self.get_configuration_template())
+
         self.start_poller(self._poller_interval, self._run_wordwar)
+
+    def get_configuration_template(self):
+        return {
+                'DEFAULT_DURATION': 15,
+                'DEFAULT_START': 5,
+                }
 
     @re_botcmd(
             pattern=_WarCommandPattern,
@@ -75,7 +85,7 @@ class WarBot(BotPlugin):
 
         args = match.groupdict()
         room = str(msg.frm.room)
-        duration = args['duration1'] or args['duration2'] or 15
+        duration = args['duration1'] or args['duration2'] or self.config['DEFAULT_DURATION']
 
         war = {'active':True}
 
@@ -89,7 +99,7 @@ class WarBot(BotPlugin):
         war['room'] = self.query_room(room)
 
         # Default to a 5-minute countdown
-        countdown = 5
+        countdown = self.config['DEFAULT_START']
 
         if args['at_hour'] or args['at_time']:
             today = datetime.today()
