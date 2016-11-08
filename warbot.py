@@ -16,15 +16,27 @@ _WarCommandPattern = r"""
         \sword\s?war
     )
     (?:\sbeginning|begins?)?
-    # "in" sets up an X-minute countdown
-    (?:\sin\s
-        (?P<in>[\d]+)(?:\smin(ute)?s?)?
+    # Figure out when
+    \s(?:
+        # "in" tells us how many minutes from now
+        (?:(?:in\s)?
+            (?P<in>[\d]+)(?:\smin(ute)?s?)?
+        )
+        |
+        # "at" may tell us the top-of-the-hour to start at...
+        (?:at\s
+            (?P<at_hour>[012]?[\d])
+        )
+        |
+        # ...or a more specific time to start at
+        (?:(?:at\s)?
+            (?P<at_time>[012]?[\d]:[0-5][\d])
+        )
+        |
+        # Or start it immediately!
+        (?P<at_now>now)
     )?
-    # "at" will calculate the countdown to start at the specified time
-    (?:\sat\s
-        (?P<at_hour>[012]?[\d])
-        (?::(?P<at_minute>\d\d))?
-    )?
+    $
 """
 
 
@@ -71,42 +83,52 @@ class WarBot(BotPlugin):
         self._wars[room]['duration'] = int(duration)
         self._wars[room]['room'] = self.query_room(room)
 
-        if args['at_hour']:
+        # Default to a 5-minute countdown
+        countdown = 5
+
+        if args['at_hour'] or args['at_time']:
             today = datetime.today()
             now = datetime.now().time()
-            if args['at_minute']:
-                then = time(hour=int(args['at_hour']), minute=int(args['at_minute']))
+            if args['at_time']:
+                hour, minute = args['at_time'].split(':')
+                start = time(hour=int(hour), minute=int(minute))
             else:
-                then = time(hour=int(args['at_hour']))
+                start = time(hour=int(args['at_hour']))
 
             now = datetime.combine(today,now)
-            then = datetime.combine(today,then)
+            start = datetime.combine(today,start)
 
             # 12-hour intervals let us quickly "flip" from am to pm and back
             delta = timedelta(hours=12)
 
             # Since we don't require "am/pm" nor 24-hour notation, let's try to
             # deduce which -- or if we need to cross to tomorrow
-            while then < now:
-                then = then + delta
+            while start < now:
+                start = start + delta
 
             # Just in case we misinterpreted a time (e.g. interpreted as "noon"
             # when user meant "midnight"), wind the clock backwards if we can
-            while then > now + delta:
-                then = then - delta
+            while start > now + delta:
+                start = start - delta
 
-            diff = then - now
+            diff = start - now
             countdown = math.ceil(diff.total_seconds()/60)
-        else:
-            countdown = args['in'] or 5
+        elif args['at_now']:
+            # Start right away
+            countdown = 0
+        elif args['in']:
+            countdown = int(args['in'])
 
-        if int(countdown) > self._max_countdown:
+        if countdown > self._max_countdown:
             return "That's a long ways away, let's set that up later instead, okay?"
 
-        self._wars[room]['countdown'] = int(countdown)
+        self._wars[room]['countdown'] = countdown
         self._wars[room]['active'] = True
 
-        return "Sounds like fun! I'll time you!"
+        if countdown > 0:
+            return "Sounds like fun! I'll time you!"
+        else:
+            return "What are you waiting for? {:d}-minute word war starts right now!".format(int(duration))
 
     @botcmd(admin_only=True)
     def war_cancel(self, msg, args):
