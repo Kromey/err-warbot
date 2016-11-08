@@ -35,6 +35,7 @@ class WarBot(BotPlugin):
     _wars = {}
 
     _poller_interval = 3
+    _max_countdown = 60
 
     def activate(self):
         super().activate()
@@ -88,6 +89,9 @@ class WarBot(BotPlugin):
             countdown = math.ceil(diff.total_seconds()/60)
         else:
             countdown = args['in'] or 5
+
+        if int(countdown) > self._max_countdown:
+            return "That's a long ways away, let's set that up later instead, okay?"
 
         self._wars[room]['countdown'] = int(countdown)
         self._wars[room]['active'] = True
