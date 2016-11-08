@@ -14,6 +14,8 @@ _WarCommandPattern = r"""
         |
         (?P<duration2>[\d]+)?(?:[- ]?min(ute)?s?)?
         \sword\s?war
+        |
+        word\s?war
     )
     (?:\sbeginning|\sbegins?|\s)?
     # Figure out when
@@ -73,7 +75,7 @@ class WarBot(BotPlugin):
 
         args = match.groupdict()
         room = str(msg.frm.room)
-        duration = args['duration1'] or args['duration2']
+        duration = args['duration1'] or args['duration2'] or 15
 
         war = {'active':True}
 
