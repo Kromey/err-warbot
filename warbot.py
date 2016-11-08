@@ -15,9 +15,9 @@ _WarCommandPattern = r"""
         (?P<duration2>[\d]+)?(?:[- ]?min(ute)?s?)?
         \sword\s?war
     )
-    (?:\sbeginning|begins?)?
+    (?:\sbeginning|\sbegins?|\s)?
     # Figure out when
-    \s(?:
+    (?:
         # "in" tells us how many minutes from now
         (?:(?:in\s)?
             (?P<in>[\d]+)(?:\smin(ute)?s?)?
