@@ -201,7 +201,7 @@ class WarBot(BotPlugin):
 
                 if war['countdown'] <= 0:
                     self._announce(war['room'], "{:d}-minute word war! Go go go!", war['duration'])
-                    self._announce(war['room'], "Good luck everyone!")
+                    self._announce(war['room'], "Good luck, everyone!")
                 else:
                     if war['countdown'] == 1:
                         self._announce(war['room'], "Get ready! {:d}-minute word war in 1 minute!", war['duration'])
