@@ -80,7 +80,7 @@ class WarBot(BotPlugin):
           * wordwar for 5 mins in 1 min
         etc.
         """
-        if msg.type != "groupchat":
+        if not msg.is_group:
             return "Sorry, I only run word wars in chat rooms"
 
         args = match.groupdict()
